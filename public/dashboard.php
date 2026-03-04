@@ -36,7 +36,11 @@ $userPodcastIds = array_column($userPodcasts, "id");
 <?php else: ?>
     <?php foreach ($podcasts as $podcast): ?>
         <div style="margin-bottom: 20px; border:1px solid #ccc; padding:10px;">
-            <h3><?php echo htmlspecialchars($podcast["title"]); ?></h3>
+            <h3>
+                <a href="podcast.php?id=<?php echo $podcast["id"]; ?>">
+                    <?php echo htmlspecialchars($podcast["title"]); ?>
+                </a>
+            </h3>
             
             <?php if ($podcast["image"]): ?>
                 <img src="<?php echo htmlspecialchars($podcast["image"]); ?>" width="150">

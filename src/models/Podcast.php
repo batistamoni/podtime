@@ -36,4 +36,30 @@ class Podcast {
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    // ========================
+    // Comprobar si podcast está completado
+    // ========================
+    public function isCompleted($podcastId, $userId) {
+
+        $sql = "SELECT 
+                    COUNT(e.id) as total,
+                    COUNT(ue.id) as listened
+                FROM episodes e
+                LEFT JOIN user_episodes ue 
+                    ON e.id = ue.episode_id 
+                    AND ue.user_id = :user_id
+                WHERE e.podcast_id = :podcast_id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute([
+            ":user_id" => $userId,
+            ":podcast_id" => $podcastId
+        ]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result["total"] > 0 && $result["total"] == $result["listened"];
+    }
 }

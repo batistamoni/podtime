@@ -85,9 +85,44 @@ foreach ($channel->item as $item) {
     $pubDate = date("Y-m-d H:i:s", strtotime((string) $item->pubDate));
 
     $itunesItem = $item->children($namespaces['itunes']);
-    $duration = isset($itunesItem->duration) 
-        ? (string) $itunesItem->duration 
-        : null;
+
+    // Obtener duración en bruto del RSS
+    $durationRaw = isset($itunesItem->duration) 
+    ? (string) $itunesItem->duration 
+    : null;
+
+    // Convertir duración a segundos (INT)
+    $duration = 0;
+
+    if ($durationRaw) {
+
+    // Si viene como hh:mm:ss o mm:ss
+    if (strpos($durationRaw, ":") !== false) {
+
+        $parts = explode(":", $durationRaw);
+
+        // hh:mm:ss
+        if (count($parts) === 3) {
+            $hours = (int)$parts[0];
+            $minutes = (int)$parts[1];
+            $seconds = (int)$parts[2];
+
+            $duration = ($hours * 3600) + ($minutes * 60) + $seconds;
+        }
+
+        // mm:ss
+        elseif (count($parts) === 2) {
+            $minutes = (int)$parts[0];
+            $seconds = (int)$parts[1];
+
+            $duration = ($minutes * 60) + $seconds;
+        }
+
+    } else {
+        // Si ya viene en segundos
+        $duration = (int)$durationRaw;
+    }
+}
 
     $sqlEpisode = "INSERT INTO episodes 
         (podcast_id, title, description, duration, episode_number, published_at)

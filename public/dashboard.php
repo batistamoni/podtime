@@ -8,11 +8,10 @@ if (!isset($_SESSION["user_id"])) {
 
 require_once "../config/database.php";
 require_once "../src/models/Podcast.php";
+require_once "../src/models/UserPodcast.php";
 
 $podcastModel = new Podcast($pdo);
 $podcasts = $podcastModel->getAll();
-
-require_once "../src/models/UserPodcast.php";
 
 $userPodcastModel = new UserPodcast($pdo);
 $userPodcasts = $userPodcastModel->getUserPodcasts($_SESSION["user_id"]);
@@ -20,72 +19,100 @@ $userPodcasts = $userPodcastModel->getUserPodcasts($_SESSION["user_id"]);
 $userPodcastIds = array_column($userPodcasts, "id");
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard - PodTime</title>
-</head>
-<body>
+<?php require_once "partials/header.php"; ?>
 
-<h1>Bienvenido, <?php echo $_SESSION["username"]; ?> 👋</h1>
+<h1 class="text-2xl font-bold mb-6">
+    Bienvenido, <?php echo $_SESSION["username"]; ?> 👋
+</h1>
 
-<h2>Catálogo de Podcasts</h2>
+<!-- ========================= -->
+<!-- 🎧 MIS PODCASTS -->
+<!-- ========================= -->
 
-<?php if (empty($podcasts)): ?>
-    <p>No hay podcasts disponibles.</p>
-<?php else: ?>
-    <?php foreach ($podcasts as $podcast): ?>
-        <div style="margin-bottom: 20px; border:1px solid #ccc; padding:10px;">
-            <h3>
-                <a href="podcast.php?id=<?php echo $podcast["id"]; ?>">
-                    <?php echo htmlspecialchars($podcast["title"]); ?>
-                </a>
-            </h3>
-            
-            <?php if ($podcast["image"]): ?>
-                <img src="<?php echo htmlspecialchars($podcast["image"]); ?>" width="150">
-            <?php endif; ?>
-            
-            <p><?php echo htmlspecialchars($podcast["description"]); ?></p>
-
-            <?php if (in_array($podcast["id"], $userPodcastIds)): ?>
-                <p><strong>Ya en tu lista</strong></p>
-            <?php else: ?>
-                <form action="../src/controllers/UserPodcastController.php" method="POST">
-                    <input type="hidden" name="podcast_id" value="<?php echo $podcast["id"]; ?>">
-                    <input type="hidden" name="action" value="add">
-                    <button type="submit">Añadir a mi lista</button>
-                </form>
-<?php endif; ?>
-        </div>
-    <?php endforeach; ?>
-<?php endif; ?>
-
-<h2>Mis Podcasts</h2>
+<h2 class="text-lg font-semibold mb-4">Tus podcasts</h2>
 
 <?php if (empty($userPodcasts)): ?>
-    <p>No sigues ningún podcast todavía.</p>
+    <p class="text-gray-500 mb-6">No sigues ningún podcast todavía.</p>
 <?php else: ?>
-    <?php foreach ($userPodcasts as $podcast): ?>
-        <div style="margin-bottom: 20px; border:1px solid green; padding:10px;">
-            <h3><?php echo htmlspecialchars($podcast["title"]); ?></h3>
-            
-            <?php if ($podcast["image"]): ?>
-                <img src="<?php echo htmlspecialchars($podcast["image"]); ?>" width="150">
-            <?php endif; ?>
-            
-            <p><?php echo htmlspecialchars($podcast["description"]); ?></p>
-        
-            <form action="../src/controllers/UserPodcastController.php" method="POST">
-                <input type="hidden" name="podcast_id" value="<?php echo $podcast["id"]; ?>">
-                <input type="hidden" name="action" value="remove">
-                <button type="submit">Eliminar de mi lista</button>
-            </form>
+
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
+
+<?php foreach ($userPodcasts as $podcast): ?>
+
+    <a href="podcast.php?id=<?php echo $podcast["id"]; ?>" 
+       class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
+
+        <?php if ($podcast["image"]): ?>
+            <img 
+                src="<?php echo htmlspecialchars($podcast["image"]); ?>" 
+                class="w-full aspect-square object-cover bg-gray-200"
+            />
+        <?php endif; ?>
+
+        <!-- Barra de progreso (de momento fija) -->
+        <div class="h-2 bg-gray-200">
+            <div class="h-2 bg-[#FFC107]" style="width: 30%"></div>
         </div>
-    <?php endforeach; ?>
+
+        <div class="p-3">
+            <p class="font-semibold text-sm">
+                <?php echo htmlspecialchars($podcast["title"]); ?>
+            </p>
+        </div>
+
+    </a>
+
+<?php endforeach; ?>
+
+</div>
+
 <?php endif; ?>
 
-<a href="logout.php">Cerrar sesión</a>
 
-</body>
-</html>
+<!-- ========================= -->
+<!-- 🔍 EXPLORAR PODCASTS -->
+<!-- ========================= -->
+
+<h2 class="text-lg font-semibold mb-4">Explorar podcasts</h2>
+
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+<?php foreach ($podcasts as $podcast): ?>
+
+    <?php if (in_array($podcast["id"], $userPodcastIds)) continue; ?>
+
+    <div class="bg-white rounded-xl shadow p-3 flex flex-col justify-between">
+
+        <div>
+            <?php if ($podcast["image"]): ?>
+                <img 
+                    src="<?php echo htmlspecialchars($podcast["image"]); ?>" 
+                    class="w-full h-32 object-cover rounded mb-2"
+                >
+            <?php endif; ?>
+
+            <p class="font-semibold text-sm mb-1">
+                <?php echo htmlspecialchars($podcast["title"]); ?>
+            </p>
+
+            <p class="text-xs text-gray-500 line-clamp-2">
+                <?php echo htmlspecialchars($podcast["description"]); ?>
+            </p>
+        </div>
+
+        <form action="../src/controllers/UserPodcastController.php" method="POST" class="mt-2">
+            <input type="hidden" name="podcast_id" value="<?php echo $podcast["id"]; ?>">
+            <input type="hidden" name="action" value="add">
+
+            <button class="w-full bg-[#FFC107] text-black py-1 rounded text-sm hover:opacity-90">
+                Seguir
+            </button>
+        </form>
+
+    </div>
+
+<?php endforeach; ?>
+
+</div>
+
+<?php require_once "partials/footer.php"; ?>
